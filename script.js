@@ -608,6 +608,7 @@ function calculateTotals(currentState) {
   const packagingAmount = Number(MENU_DATA.pricing?.packaging?.amount || 0);
   const needsPackaging = currentState.orderMeta.orderType !== 'local';
   const packaging = needsPackaging ? packagingAmount * totalQty : 0;
+  const pickupCharge = currentState.orderMeta.orderType === 'pickup' ? getPickupChargeAmount() : 0;
 
   const fixedShipping = getShippingFixedAmount();
   const shippingNumeric = currentState.orderMeta.shippingMode === 'fixed' ? fixedShipping : 0;
@@ -619,14 +620,19 @@ function calculateTotals(currentState) {
   return {
     subtotal,
     packaging,
+    pickupCharge,
     shipping: shippingNumeric,
     shippingLabel,
-    total: subtotal + packaging + shippingNumeric,
+    total: subtotal + packaging + pickupCharge + shippingNumeric,
   };
 }
 
 function getShippingFixedAmount() {
   return Number(MENU_DATA.pricing?.shipping?.fixedAmount || 30);
+}
+
+function getPickupChargeAmount() {
+  return Number(MENU_DATA.pricing?.pickupCharge?.amount || 0);
 }
 
 function isProductAvailableNow(product) {
@@ -828,23 +834,56 @@ function generateWhatsAppMessage(currentState, totals) {
   lines.push('ORDEN:');
 
   currentState.cartItems.forEach((item) => {
-    const details = item.selectedModifiers?.length
-      ? ` (${item.selectedModifiers.map((entry) => entry.label).join(', ')})`
-      : '';
+    const unitPriceLabel =
+      item.qty > 1 ? `${formatCurrency(item.unitBase)} c/u` : `${formatCurrency(item.unitBase)}`;
+    lines.push(`- ${item.qty} x ${item.name} — ${unitPriceLabel}`);
 
-    lines.push(`- ${item.name}${details} x${item.qty}`);
+    const modifierLines = formatItemModifiersForMessage(item);
+    modifierLines.forEach((line) => lines.push(`  ${line}`));
+    lines.push(`  Subtotal línea: ${formatCurrency(item.lineSubtotal)}`);
+    lines.push('');
   });
 
-  lines.push('');
-  lines.push(`SUBTOTAL: ${formatCurrency(totals.subtotal)}`);
+  lines.push(`SUBTOTAL PRODUCTOS: ${formatCurrency(totals.subtotal)}`);
   lines.push(`EMPAQUE: ${formatCurrency(totals.packaging)}`);
+  if (totals.pickupCharge > 0) {
+    lines.push(`CARGO POR LLEVAR: ${formatCurrency(totals.pickupCharge)}`);
+  }
   lines.push(`ENVÍO: ${totals.shippingLabel}`);
-  lines.push(`TOTAL: ${formatCurrency(totals.total)}`);
-  lines.push('');
-  lines.push('Notas:');
-  lines.push(currentState.customer.notes || 'Sin notas');
+  lines.push(`TOTAL ESTIMADO: ${formatCurrency(totals.total)}`);
+
+  if (currentState.customer.notes) {
+    lines.push('');
+    lines.push('Notas:');
+    lines.push(currentState.customer.notes);
+  }
 
   return lines.join('\n');
+}
+
+function formatItemModifiersForMessage(item) {
+  if (!Array.isArray(item.selectedModifiers) || !item.selectedModifiers.length) return [];
+
+  return item.selectedModifiers.map((modifier) => {
+    const label = normalizeModifierLabel(modifier.groupLabel, modifier.label, modifier.priceDelta);
+    if ((modifier.priceDelta || 0) > 0) {
+      return `${label}: +${formatCurrency(modifier.priceDelta)}`;
+    }
+    return `${label}: ${modifier.label}`;
+  });
+}
+
+function normalizeModifierLabel(groupLabel, optionLabel, priceDelta) {
+  const group = String(groupLabel || '').trim().toLowerCase();
+  const option = String(optionLabel || '').trim();
+
+  if (group.includes('prepar')) return 'Preparación';
+  if (group.includes('relleno')) return 'Relleno';
+  if (group.includes('tipo') || group.includes('versi')) return 'Tipo';
+  if (group.includes('extra')) return option || 'Extra';
+  if ((priceDelta || 0) > 0) return option || 'Extra';
+
+  return groupLabel || 'Opción';
 }
 
 function formatOrderType(orderType) {

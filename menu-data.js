@@ -4,7 +4,11 @@ window.MENU_DATA = {
     packaging: {
       enabledFor: 'all_products',
       mode: 'per_item',
-      amount: 5,
+      amount: 10,
+    },
+    pickupCharge: {
+      mode: 'fixed_per_order',
+      amount: 0,
     },
     shipping: {
       mode: 'confirm_default_with_toggle_fixed',
