@@ -33,35 +33,10 @@
           <a href="#bebidas-postres">Bebidas y postres</a>
           <a href="#conocenos">Conócenos</a>
         </div>
+        <button class="nav-order-btn" type="button" data-order-trigger>Realizar pedido</button>
       </nav>
 
-      <div class="hero-overlay reveal">
-        <img class="hero-logo" src="Menú V2/Logo.png" alt="Logotipo de Cocina La Abundancia" />
-        <p class="hero-kicker">Menú digital premium · Pedidos rápidos</p>
-        <h1>Cocina La Abundancia</h1>
-        <p class="hero-phone">55 7334 2834</p>
-        <p class="hero-tagline">Sabor casero, atención cálida y comida abundante.</p>
-        <div class="hero-actions">
-          <a
-            class="btn-whatsapp-card btn-whatsapp-primary"
-            href="https://wa.me/525573342834?text=Hola%2C%20buen%20d%C3%ADa.%0AMe%20gustar%C3%ADa%20saber%20cu%C3%A1l%20es%20el%20men%C3%BA%20del%20d%C3%ADa%20(comida%20corrida)%2C%20por%20favor.%0A%0AGracias."
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="wa-icon-box" aria-hidden="true">
-              <svg viewBox="0 0 32 32" role="img" focusable="false">
-                <path
-                  d="M16 3C9.383 3 4 8.18 4 14.56c0 2.458.82 4.73 2.21 6.57L5 29l7.94-1.98c1.82.98 3.93 1.54 6.06 1.54 6.617 0 12-5.18 12-11.56C31 8.18 25.617 3 16 3zm6.97 16.72c-.3.83-1.49 1.54-2.05 1.6-.52.05-1.17.08-1.89-.12-.44-.12-1.01-.33-1.74-.64-3.07-1.31-5.07-4.54-5.22-4.74-.15-.2-1.25-1.62-1.25-3.09 0-1.47.8-2.19 1.08-2.49.28-.3.6-.38.8-.38.2 0 .4 0 .57.01.18.01.42-.06.66.5.25.56.84 1.93.92 2.07.08.14.13.3.03.5-.1.2-.15.3-.3.47-.15.16-.31.35-.44.47-.15.14-.3.29-.13.56.17.27.77 1.24 1.65 2.01 1.13.98 2.08 1.28 2.38 1.42.3.14.47.12.64-.07.17-.2.74-.84.94-1.13.2-.28.4-.24.67-.14.27.1 1.72.78 2.01.92.29.14.48.21.55.33.07.11.07.66-.23 1.49z"
-                />
-              </svg>
-            </span>
-            <span class="btn-copy">
-              <span class="btn-title">Pedir menú por WhatsApp</span>
-              <span class="btn-subtitle">Respuesta rápida</span>
-            </span>
-          </a>
-        </div>
-      </div>
+      <h1 class="sr-only">Cocina La Abundancia</h1>
     </header>
 
     <main>
@@ -161,10 +136,13 @@
 
       <section class="about-section reveal" id="conocenos">
         <div class="elegant-wrap">
-          <div class="elegant-card">
+          <div class="elegant-card known-card">
             <h2 class="card-title">📍 Conócenos</h2>
             <p class="card-sub">
               Visítanos y disfruta el auténtico sabor casero en un ambiente familiar.
+            </p>
+            <p class="known-address">
+              Servicio en zona de entrega local. Comparte tu dirección o ubicación al hacer tu pedido.
             </p>
 
             <div class="map-container">
@@ -183,51 +161,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Ver en Google Maps
-            </a>
-          </div>
-        </div>
-
-        <div class="elegant-wrap">
-          <div class="btn-stack">
-            <a
-              class="social-btn"
-              href="https://wa.me/525573342834?text=Hola%2C%20buen%20d%C3%ADa.%0AMi%20nombre%20es%20%5BTU%20NOMBRE%5D.%0A%0AMe%20gustar%C3%ADa%20realizar%20un%20pedido%20a%20domicilio.%0ADirecci%C3%B3n%20o%20ubicaci%C3%B3n%3A%20%5BDIRECCI%C3%93N%5D.%0A%0AORDEN%3A%0A-%0A-%0A-%0A%0AMuchas%20gracias."
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div class="social-ico social-ico-wa" aria-hidden="true">
-                <svg viewBox="0 0 32 32" width="24" height="24">
-                  <path
-                    fill="currentColor"
-                    d="M16 3C9.383 3 4 8.18 4 14.56c0 2.458.82 4.73 2.21 6.57L5 29l7.94-1.98c1.82.98 3.93 1.54 6.06 1.54 6.617 0 12-5.18 12-11.56C31 8.18 25.617 3 16 3z"
-                  />
-                </svg>
-              </div>
-              <div class="social-txt">
-                <span class="social-title">Pedir por WhatsApp</span>
-                <span class="social-sub">Envíanos tu nombre, ubicación y tu orden</span>
-              </div>
-            </a>
-
-            <a
-              class="social-btn"
-              href="https://www.facebook.com/groups/605911083537750"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div class="social-ico social-ico-fb" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path
-                    fill="currentColor"
-                    d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.22.2 2.22.2v2.45h-1.25c-1.23 0-1.61.76-1.61 1.54V12h2.74l-.44 2.89h-2.3v6.99A10 10 0 0 0 22 12z"
-                  />
-                </svg>
-              </div>
-              <div class="social-txt">
-                <span class="social-title">Síguenos en Facebook</span>
-                <span class="social-sub">Promociones, avisos y novedades</span>
-              </div>
+              Cómo llegar
             </a>
           </div>
         </div>
@@ -236,26 +170,183 @@
 
     <footer>
       <p>Cocina La Abundancia</p>
+      <a
+        class="footer-link"
+        href="https://www.facebook.com/groups/605911083537750"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Síguenos en Facebook
+      </a>
       <small>&copy; 2026. Todos los derechos reservados.</small>
     </footer>
 
-    <a
-      class="mobile-wa-bar"
-      href="https://wa.me/525573342834?text=Hola%2C%20buen%20d%C3%ADa.%0AMe%20gustar%C3%ADa%20saber%20cu%C3%A1l%20es%20el%20men%C3%BA%20del%20d%C3%ADa%20(comida%20corrida)%2C%20por%20favor.%0A%0AGracias."
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Abrir WhatsApp para pedir menú del día"
+    <button
+      class="mobile-order-bar"
+      id="open-order-sheet"
+      type="button"
+      aria-haspopup="dialog"
+      aria-controls="order-sheet"
+      data-order-trigger
     >
-      <span class="wa-icon-box" aria-hidden="true">
-        <svg viewBox="0 0 32 32" role="img" focusable="false">
-          <path
-            d="M16 3C9.383 3 4 8.18 4 14.56c0 2.458.82 4.73 2.21 6.57L5 29l7.94-1.98c1.82.98 3.93 1.54 6.06 1.54 6.617 0 12-5.18 12-11.56C31 8.18 25.617 3 16 3zm6.97 16.72c-.3.83-1.49 1.54-2.05 1.6-.52.05-1.17.08-1.89-.12-.44-.12-1.01-.33-1.74-.64-3.07-1.31-5.07-4.54-5.22-4.74-.15-.2-1.25-1.62-1.25-3.09 0-1.47.8-2.19 1.08-2.49.28-.3.6-.38.8-.38.2 0 .4 0 .57.01.18.01.42-.06.66.5.25.56.84 1.93.92 2.07.08.14.13.3.03.5-.1.2-.15.3-.3.47-.15.16-.31.35-.44.47-.15.14-.3.29-.13.56.17.27.77 1.24 1.65 2.01 1.13.98 2.08 1.28 2.38 1.42.3.14.47.12.64-.07.17-.2.74-.84.94-1.13.2-.28.4-.24.67-.14.27.1 1.72.78 2.01.92.29.14.48.21.55.33.07.11.07.66-.23 1.49z"
-          />
-        </svg>
+      <span class="order-bar-icon" aria-hidden="true">🛒</span>
+      <span class="order-bar-copy">
+        <span class="order-bar-title">Realizar pedido</span>
+        <span class="order-bar-meta" id="order-bar-meta">Sin productos</span>
       </span>
-      Pedir por WhatsApp
-    </a>
+    </button>
 
+    <div class="order-backdrop" id="order-backdrop" hidden></div>
+    <aside
+      class="order-sheet"
+      id="order-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-sheet-title"
+      hidden
+    >
+      <header class="order-sheet-header">
+        <div>
+          <p class="order-kicker">Pedido libre</p>
+          <h2 id="order-sheet-title">Arma tu pedido</h2>
+        </div>
+        <button class="order-close" id="close-order-sheet" type="button" aria-label="Cerrar pedido">
+          ✕
+        </button>
+      </header>
+
+      <nav class="order-steps" aria-label="Pasos de pedido">
+        <button type="button" class="order-step is-active" data-step="menu">Menú</button>
+        <button type="button" class="order-step" data-step="cart">Resumen</button>
+        <button type="button" class="order-step" data-step="checkout">Datos</button>
+      </nav>
+
+      <section class="order-panel is-active" data-panel="menu">
+        <div class="category-chips" id="category-chips"></div>
+        <div class="product-grid" id="product-grid"></div>
+      </section>
+
+      <section class="order-panel" data-panel="cart">
+        <div class="cart-list" id="cart-list"></div>
+        <div class="cart-empty" id="cart-empty">Aún no agregas productos al pedido.</div>
+      </section>
+
+      <section class="order-panel" data-panel="checkout">
+        <form class="checkout-form" id="checkout-form" novalidate>
+          <fieldset class="checkout-group">
+            <legend>Tipo de pedido *</legend>
+            <label class="choice-row">
+              <input type="radio" name="order-type" value="local" checked />
+              <span>Consumo local</span>
+            </label>
+            <label class="choice-row">
+              <input type="radio" name="order-type" value="pickup" />
+              <span>Para llevar</span>
+            </label>
+            <label class="choice-row">
+              <input type="radio" name="order-type" value="delivery" />
+              <span>Envío a domicilio</span>
+            </label>
+          </fieldset>
+
+          <fieldset class="checkout-group">
+            <legend>Envío</legend>
+            <label class="choice-row">
+              <input type="radio" name="shipping-mode" value="confirm" checked />
+              <span>Envío por confirmar</span>
+            </label>
+            <label class="choice-row">
+              <input type="radio" name="shipping-mode" value="fixed" />
+              <span id="shipping-fixed-label">Tarifa fija</span>
+            </label>
+          </fieldset>
+
+          <label>
+            Nombre completo *
+            <input id="customer-name" name="name" type="text" autocomplete="name" required />
+          </label>
+
+          <label>
+            Dirección de entrega
+            <textarea
+              id="customer-address"
+              name="address"
+              rows="2"
+              placeholder="Calle, número, colonia y referencias"
+            ></textarea>
+          </label>
+
+          <button class="geo-btn" id="geo-btn" type="button">Usar mi ubicación actual</button>
+          <p class="geo-status" id="geo-status">Puedes enviar dirección escrita o compartir ubicación.</p>
+
+          <label>
+            Notas del pedido
+            <textarea
+              id="customer-notes"
+              name="notes"
+              rows="2"
+              placeholder="Sin cebolla, tocar timbre, etc."
+            ></textarea>
+          </label>
+        </form>
+      </section>
+
+      <footer class="order-footer">
+        <div class="order-breakdown">
+          <p><span>Subtotal</span><strong id="order-subtotal">$0</strong></p>
+          <p><span>Empaque</span><strong id="order-packaging">$0</strong></p>
+          <p><span>Envío</span><strong id="order-shipping">Por confirmar</strong></p>
+        </div>
+        <div class="order-total-wrap">
+          <span>Total estimado</span>
+          <strong id="order-total">$0</strong>
+        </div>
+        <div class="order-footer-actions">
+          <button class="ghost-btn" id="order-next-btn" type="button">Continuar</button>
+          <button class="wa-submit-btn" id="send-order-btn" type="button">Enviar por WhatsApp</button>
+        </div>
+        <p class="order-helper" id="order-helper">
+          El total es estimado. El envío y disponibilidad se confirman por WhatsApp.
+        </p>
+      </footer>
+    </aside>
+
+    <div class="config-backdrop" id="config-backdrop" hidden></div>
+    <section
+      class="config-sheet"
+      id="config-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="config-title"
+      hidden
+    >
+      <header class="config-header">
+        <h3 id="config-title">Configurar producto</h3>
+        <button class="order-close" id="close-config-sheet" type="button" aria-label="Cerrar configuración">
+          ✕
+        </button>
+      </header>
+      <div class="config-body">
+        <p class="config-product-name" id="config-product-name"></p>
+        <p class="config-product-price" id="config-product-price"></p>
+        <div id="config-options"></div>
+        <label class="config-qty">
+          Cantidad
+          <div class="qty-control">
+            <button type="button" id="config-qty-dec">−</button>
+            <span id="config-qty">1</span>
+            <button type="button" id="config-qty-inc">+</button>
+          </div>
+        </label>
+        <p class="config-error" id="config-error"></p>
+      </div>
+      <footer class="config-footer">
+        <button class="ghost-btn" id="cancel-config-btn" type="button">Cancelar</button>
+        <button class="wa-submit-btn" id="add-config-btn" type="button">Agregar al pedido</button>
+      </footer>
+    </section>
+
+    <script src="menu-data.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
