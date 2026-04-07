@@ -8,7 +8,12 @@
       content="Cocina La Abundancia - Menú del día, desayunos, antojitos, bebidas y postres."
     />
     <title>Cocina La Abundancia</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css?v=20260407-1" />
   </head>
   <body>
     <header class="hero" id="inicio">
@@ -221,80 +226,101 @@
         <button type="button" class="order-step" data-step="checkout">Datos</button>
       </nav>
 
-      <section class="order-panel is-active" data-panel="menu">
-        <div class="category-chips" id="category-chips"></div>
-        <div class="product-grid" id="product-grid"></div>
-      </section>
+      <div class="order-sheet-scroll" id="order-sheet-scroll">
+        <section class="order-panel is-active" data-panel="menu">
+          <div class="category-chips" id="category-chips"></div>
+          <div class="product-grid" id="product-grid"></div>
+        </section>
 
-      <section class="order-panel" data-panel="cart">
-        <div class="cart-list" id="cart-list"></div>
-        <div class="cart-empty" id="cart-empty">Aún no agregas productos al pedido.</div>
-      </section>
+        <section class="order-panel" data-panel="cart">
+          <div class="cart-list" id="cart-list"></div>
+          <div class="cart-empty" id="cart-empty">Aún no agregas productos al pedido.</div>
+        </section>
 
-      <section class="order-panel" data-panel="checkout">
-        <form class="checkout-form" id="checkout-form" novalidate>
-          <fieldset class="checkout-group">
-            <legend>Tipo de pedido *</legend>
-            <label class="choice-row">
-              <input type="radio" name="order-type" value="local" checked />
-              <span>Consumo local</span>
+        <section class="order-panel" data-panel="checkout">
+          <form class="checkout-form" id="checkout-form" novalidate>
+            <fieldset class="checkout-group">
+              <legend>Tipo de pedido *</legend>
+              <label class="choice-row">
+                <input type="radio" name="order-type" value="local" checked />
+                <span>Consumo local</span>
+              </label>
+              <label class="choice-row">
+                <input type="radio" name="order-type" value="pickup" />
+                <span>Para llevar</span>
+              </label>
+              <label class="choice-row">
+                <input type="radio" name="order-type" value="delivery" />
+                <span>Envío a domicilio</span>
+              </label>
+            </fieldset>
+
+            <fieldset class="checkout-group">
+              <legend>Envío</legend>
+              <p class="shipping-note">Costo de envío: <strong>$10 por kilómetro</strong> (se confirma por WhatsApp).</p>
+            </fieldset>
+
+            <label>
+              Nombre completo *
+              <input id="customer-name" name="name" type="text" autocomplete="name" required />
             </label>
-            <label class="choice-row">
-              <input type="radio" name="order-type" value="pickup" />
-              <span>Para llevar</span>
+
+            <label>
+              Dirección de entrega
+              <textarea
+                id="customer-address"
+                name="address"
+                rows="2"
+                placeholder="Calle, número, colonia y referencias"
+              ></textarea>
             </label>
-            <label class="choice-row">
-              <input type="radio" name="order-type" value="delivery" />
-              <span>Envío a domicilio</span>
+
+            <label>
+              Entre calles
+              <input
+                id="customer-between-streets"
+                name="between-streets"
+                type="text"
+                placeholder="Ej. Av. Principal y Calle 5"
+              />
             </label>
-          </fieldset>
 
-          <fieldset class="checkout-group">
-            <legend>Envío</legend>
-            <label class="choice-row">
-              <input type="radio" name="shipping-mode" value="confirm" checked />
-              <span>Envío por confirmar</span>
+            <label>
+              Referencias
+              <textarea
+                id="customer-references"
+                name="references"
+                rows="2"
+                placeholder="Portón negro, junto a la tienda, etc."
+              ></textarea>
             </label>
-            <label class="choice-row">
-              <input type="radio" name="shipping-mode" value="fixed" />
-              <span id="shipping-fixed-label">Tarifa fija</span>
+
+            <button class="geo-btn" id="geo-btn" type="button">Usar mi ubicación actual</button>
+            <button class="geo-btn geo-btn-secondary" id="map-picker-btn" type="button">
+              Elegir ubicación en el mapa
+            </button>
+            <p class="geo-status" id="geo-status">Puedes enviar dirección escrita o compartir ubicación.</p>
+
+            <label>
+              Notas del pedido
+              <textarea
+                id="customer-notes"
+                name="notes"
+                rows="2"
+                placeholder="Sin cebolla, tocar timbre, etc."
+              ></textarea>
             </label>
-          </fieldset>
-
-          <label>
-            Nombre completo *
-            <input id="customer-name" name="name" type="text" autocomplete="name" required />
-          </label>
-
-          <label>
-            Dirección de entrega
-            <textarea
-              id="customer-address"
-              name="address"
-              rows="2"
-              placeholder="Calle, número, colonia y referencias"
-            ></textarea>
-          </label>
-
-          <button class="geo-btn" id="geo-btn" type="button">Usar mi ubicación actual</button>
-          <p class="geo-status" id="geo-status">Puedes enviar dirección escrita o compartir ubicación.</p>
-
-          <label>
-            Notas del pedido
-            <textarea
-              id="customer-notes"
-              name="notes"
-              rows="2"
-              placeholder="Sin cebolla, tocar timbre, etc."
-            ></textarea>
-          </label>
-        </form>
-      </section>
+          </form>
+        </section>
+      </div>
 
       <footer class="order-footer">
         <div class="order-breakdown">
           <p><span>Subtotal</span><strong id="order-subtotal">$0</strong></p>
           <p><span>Empaque</span><strong id="order-packaging">$0</strong></p>
+          <p id="order-shipping-distance-row" hidden>
+            <span>Distancia estimada</span><strong id="order-shipping-distance">—</strong>
+          </p>
           <p><span>Envío</span><strong id="order-shipping">Por confirmar</strong></p>
         </div>
         <div class="order-total-wrap">
@@ -346,7 +372,39 @@
       </footer>
     </section>
 
-    <script src="menu-data.js"></script>
-    <script src="script.js"></script>
+    <div class="map-picker-backdrop" id="map-picker-backdrop" hidden></div>
+    <section
+      class="map-picker-modal"
+      id="map-picker-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="map-picker-title"
+      hidden
+    >
+      <header class="map-picker-header">
+        <h3 id="map-picker-title">Selecciona tu ubicación</h3>
+        <button class="order-close" id="close-map-picker" type="button" aria-label="Cerrar mapa">
+          ✕
+        </button>
+      </header>
+      <div class="map-picker-body">
+        <p class="map-picker-help">
+          Puedes tocar un punto en el mapa o moverlo y usar el centro para fijar tu ubicación.
+        </p>
+        <div id="location-map" class="location-map" role="application" aria-label="Mapa de ubicación"></div>
+        <p class="map-picker-status" id="map-picker-status">Sin punto seleccionado.</p>
+      </div>
+      <footer class="map-picker-footer">
+        <button class="ghost-btn" id="cancel-map-picker-btn" type="button">Cancelar</button>
+        <button class="wa-submit-btn" id="confirm-map-picker-btn" type="button">Usar punto seleccionado</button>
+      </footer>
+    </section>
+
+    <script src="menu-data.js?v=20260407-1"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin=""
+    ></script>
+    <script src="script.js?v=20260407-1"></script>
   </body>
 </html>

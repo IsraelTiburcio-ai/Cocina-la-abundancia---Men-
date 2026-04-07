@@ -7,10 +7,16 @@ const sections = document.querySelectorAll('section[id]');
 const ORDER_PHONE = '525573342834';
 const STORAGE_KEY = 'cla_order_state_v2';
 const STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
+let modalOpenDepth = 0;
+let lockedScrollY = 0;
+let touchGuardsInstalled = false;
+let locationMapInstance = null;
+let businessMapMarker = null;
+let customerMapMarker = null;
+let pendingMapSelection = null;
 
 const DEFAULT_ORDER_META = {
   orderType: 'local',
-  shippingMode: 'confirm',
 };
 
 const state = {
@@ -19,6 +25,8 @@ const state = {
   customer: {
     name: '',
     address: '',
+    betweenStreets: '',
+    references: '',
     notes: '',
     location: null,
   },
@@ -41,12 +49,15 @@ const el = {
   closeOrderBtn: document.getElementById('close-order-sheet'),
   stepBtns: document.querySelectorAll('.order-step'),
   panels: document.querySelectorAll('.order-panel'),
+  orderSheetScroll: document.getElementById('order-sheet-scroll'),
   categoryChips: document.getElementById('category-chips'),
   productGrid: document.getElementById('product-grid'),
   cartList: document.getElementById('cart-list'),
   cartEmpty: document.getElementById('cart-empty'),
   orderSubtotal: document.getElementById('order-subtotal'),
   orderPackaging: document.getElementById('order-packaging'),
+  orderShippingDistanceRow: document.getElementById('order-shipping-distance-row'),
+  orderShippingDistance: document.getElementById('order-shipping-distance'),
   orderShipping: document.getElementById('order-shipping'),
   orderTotal: document.getElementById('order-total'),
   nextBtn: document.getElementById('order-next-btn'),
@@ -54,12 +65,20 @@ const el = {
   helper: document.getElementById('order-helper'),
   customerName: document.getElementById('customer-name'),
   customerAddress: document.getElementById('customer-address'),
+  customerBetweenStreets: document.getElementById('customer-between-streets'),
+  customerReferences: document.getElementById('customer-references'),
   customerNotes: document.getElementById('customer-notes'),
   geoBtn: document.getElementById('geo-btn'),
+  mapPickerBtn: document.getElementById('map-picker-btn'),
   geoStatus: document.getElementById('geo-status'),
+  mapPickerBackdrop: document.getElementById('map-picker-backdrop'),
+  mapPickerModal: document.getElementById('map-picker-modal'),
+  closeMapPickerBtn: document.getElementById('close-map-picker'),
+  cancelMapPickerBtn: document.getElementById('cancel-map-picker-btn'),
+  confirmMapPickerBtn: document.getElementById('confirm-map-picker-btn'),
+  mapPickerStatus: document.getElementById('map-picker-status'),
+  locationMap: document.getElementById('location-map'),
   orderTypeInputs: document.querySelectorAll('input[name="order-type"]'),
-  shippingModeInputs: document.querySelectorAll('input[name="shipping-mode"]'),
-  shippingFixedLabel: document.getElementById('shipping-fixed-label'),
   configSheet: document.getElementById('config-sheet'),
   configBackdrop: document.getElementById('config-backdrop'),
   configTitle: document.getElementById('config-title'),
@@ -166,10 +185,6 @@ function initOrderModule() {
   syncCustomerForm();
   syncOrderMetaControls();
 
-  if (el.shippingFixedLabel) {
-    el.shippingFixedLabel.textContent = `Tarifa fija (${formatCurrency(getShippingFixedAmount())})`;
-  }
-
   el.openOrderBtns.forEach((trigger) => {
     trigger.addEventListener('click', () => {
       openOrderSheet(state.cartItems.length ? 'cart' : 'menu');
@@ -190,15 +205,6 @@ function initOrderModule() {
     input.addEventListener('change', () => {
       if (!input.checked) return;
       state.orderMeta.orderType = input.value;
-      renderCart();
-      persistState();
-    });
-  });
-
-  el.shippingModeInputs.forEach((input) => {
-    input.addEventListener('change', () => {
-      if (!input.checked) return;
-      state.orderMeta.shippingMode = input.value;
       renderCart();
       persistState();
     });
@@ -248,16 +254,29 @@ function initOrderModule() {
     if (remove) removeItem(remove.dataset.cartRemove);
   });
 
-  [el.customerName, el.customerAddress, el.customerNotes].forEach((field) => {
+  [
+    el.customerName,
+    el.customerAddress,
+    el.customerBetweenStreets,
+    el.customerReferences,
+    el.customerNotes,
+  ].forEach((field) => {
     field?.addEventListener('input', () => {
       state.customer.name = el.customerName?.value.trim() || '';
       state.customer.address = el.customerAddress?.value.trim() || '';
+      state.customer.betweenStreets = el.customerBetweenStreets?.value.trim() || '';
+      state.customer.references = el.customerReferences?.value.trim() || '';
       state.customer.notes = el.customerNotes?.value.trim() || '';
       persistState();
     });
   });
 
   el.geoBtn?.addEventListener('click', handleGeolocation);
+  el.mapPickerBtn?.addEventListener('click', openMapModal);
+  el.closeMapPickerBtn?.addEventListener('click', closeMapModal);
+  el.cancelMapPickerBtn?.addEventListener('click', closeMapModal);
+  el.mapPickerBackdrop?.addEventListener('click', closeMapModal);
+  el.confirmMapPickerBtn?.addEventListener('click', confirmMapSelection);
 
   el.closeConfigBtn?.addEventListener('click', closeConfigSheet);
   el.cancelConfigBtn?.addEventListener('click', closeConfigSheet);
@@ -265,15 +284,21 @@ function initOrderModule() {
   el.configQtyInc?.addEventListener('click', () => updateConfigQty(1));
   el.configQtyDec?.addEventListener('click', () => updateConfigQty(-1));
   el.addConfigBtn?.addEventListener('click', handleAddConfiguredProduct);
+  installTouchScrollGuards();
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       if (!el.configSheet?.hidden) closeConfigSheet();
+      else if (!el.mapPickerModal?.hidden) closeMapModal();
       else if (!el.orderSheet?.hidden) closeOrderSheet();
     }
 
-    if (event.key === 'Tab' && !el.orderSheet?.hidden) {
-      trapFocus(event, el.orderSheet);
+    if (event.key === 'Tab') {
+      if (!el.mapPickerModal?.hidden) {
+        trapFocus(event, el.mapPickerModal);
+      } else if (!el.orderSheet?.hidden) {
+        trapFocus(event, el.orderSheet);
+      }
     }
   });
 }
@@ -295,6 +320,7 @@ function setActivePanel(panelName) {
 }
 
 function openOrderSheet(initialPanel = 'menu') {
+  lockBodyScroll();
   el.orderSheet.hidden = false;
   el.orderBackdrop.hidden = false;
 
@@ -304,6 +330,7 @@ function openOrderSheet(initialPanel = 'menu') {
   });
 
   setActivePanel(initialPanel);
+  if (el.orderSheetScroll) el.orderSheetScroll.scrollTop = 0;
   state.ui.sheetOpen = true;
   el.closeOrderBtn?.focus();
 }
@@ -317,6 +344,7 @@ function closeOrderSheet() {
     if (!state.ui.sheetOpen) {
       el.orderSheet.hidden = true;
       el.orderBackdrop.hidden = true;
+      unlockBodyScroll();
     }
   }, 200);
 }
@@ -413,6 +441,15 @@ function renderCart() {
   const totals = calculateTotals(state);
   el.orderSubtotal.textContent = formatCurrency(totals.subtotal);
   el.orderPackaging.textContent = formatCurrency(totals.packaging);
+  if (el.orderShippingDistanceRow && el.orderShippingDistance) {
+    if (totals.shippingDistanceKmRaw !== null) {
+      el.orderShippingDistanceRow.hidden = false;
+      el.orderShippingDistance.textContent = `${totals.shippingDistanceKmRaw} km`;
+    } else {
+      el.orderShippingDistanceRow.hidden = true;
+      el.orderShippingDistance.textContent = '—';
+    }
+  }
   el.orderShipping.textContent = totals.shippingLabel;
   el.orderTotal.textContent = formatCurrency(totals.total);
 
@@ -486,6 +523,7 @@ function openConfigSheet(product) {
 
   el.configOptions.innerHTML = optionsHtml;
 
+  lockBodyScroll();
   el.configSheet.hidden = false;
   el.configBackdrop.hidden = false;
 
@@ -502,7 +540,158 @@ function closeConfigSheet() {
   window.setTimeout(() => {
     el.configSheet.hidden = true;
     el.configBackdrop.hidden = true;
+    unlockBodyScroll();
   }, 180);
+}
+
+function openMapModal() {
+  if (!el.mapPickerModal || !el.mapPickerBackdrop) return;
+
+  lockBodyScroll();
+  el.mapPickerModal.hidden = false;
+  el.mapPickerBackdrop.hidden = false;
+
+  requestAnimationFrame(() => {
+    el.mapPickerModal.classList.add('is-open');
+    el.mapPickerBackdrop.classList.add('is-open');
+  });
+
+  pendingMapSelection = hasValidCoordinates(state.customer.location)
+    ? { lat: Number(state.customer.location.lat), lng: Number(state.customer.location.lng) }
+    : null;
+
+  initMap();
+  refreshMapSelectionUI();
+  el.closeMapPickerBtn?.focus();
+}
+
+function closeMapModal() {
+  if (!el.mapPickerModal || !el.mapPickerBackdrop) return;
+
+  el.mapPickerModal.classList.remove('is-open');
+  el.mapPickerBackdrop.classList.remove('is-open');
+
+  window.setTimeout(() => {
+    el.mapPickerModal.hidden = true;
+    el.mapPickerBackdrop.hidden = true;
+    unlockBodyScroll();
+  }, 180);
+}
+
+function confirmMapSelection() {
+  const selected = pendingMapSelection || getCenterSelection();
+  if (!selected) {
+    if (el.mapPickerStatus) {
+      el.mapPickerStatus.textContent = 'Selecciona un punto en el mapa antes de confirmar.';
+    }
+    return;
+  }
+
+  setCustomerLocation(selected.lat, selected.lng, 'map');
+  closeMapModal();
+}
+
+function lockBodyScroll() {
+  if (modalOpenDepth === 0) {
+    lockedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${lockedScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+  }
+  modalOpenDepth += 1;
+}
+
+function unlockBodyScroll() {
+  if (modalOpenDepth === 0) return;
+  modalOpenDepth -= 1;
+  if (modalOpenDepth > 0) return;
+
+  document.documentElement.classList.remove('modal-open');
+  document.body.classList.remove('modal-open');
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  window.scrollTo(0, lockedScrollY);
+}
+
+function installTouchScrollGuards() {
+  if (touchGuardsInstalled) return;
+  touchGuardsInstalled = true;
+
+  [el.orderBackdrop, el.configBackdrop, el.mapPickerBackdrop].forEach((backdrop) => {
+    if (!backdrop) return;
+    backdrop.addEventListener(
+      'touchmove',
+      (event) => {
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+  });
+
+  const installSheetTouchGuard = (sheet, isOpen, findScroller) => {
+    if (!sheet) return;
+    let lastY = 0;
+
+    sheet.addEventListener(
+      'touchstart',
+      (event) => {
+        if (!isOpen()) return;
+        lastY = event.touches[0]?.clientY || 0;
+      },
+      { passive: true }
+    );
+
+    sheet.addEventListener(
+      'touchmove',
+      (event) => {
+        if (!isOpen()) return;
+
+        const activeScroller = findScroller(event.target);
+        if (!activeScroller) {
+          event.preventDefault();
+          return;
+        }
+
+        const currentY = event.touches[0]?.clientY || 0;
+        const deltaY = currentY - lastY;
+        lastY = currentY;
+
+        const canScroll = activeScroller.scrollHeight > activeScroller.clientHeight;
+        if (!canScroll) {
+          event.preventDefault();
+          return;
+        }
+
+        const atTop = activeScroller.scrollTop <= 0;
+        const atBottom =
+          activeScroller.scrollTop + activeScroller.clientHeight >= activeScroller.scrollHeight - 1;
+
+        if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+  };
+
+  installSheetTouchGuard(
+    el.orderSheet,
+    () => el.orderSheet?.classList.contains('is-open'),
+    (target) => target.closest('.order-sheet-scroll')
+  );
+
+  installSheetTouchGuard(
+    el.configSheet,
+    () => el.configSheet?.classList.contains('is-open'),
+    (target) => target.closest('.config-body')
+  );
 }
 
 function updateConfigQty(delta) {
@@ -609,30 +798,111 @@ function calculateTotals(currentState) {
   const needsPackaging = currentState.orderMeta.orderType !== 'local';
   const packaging = needsPackaging ? packagingAmount * totalQty : 0;
   const pickupCharge = currentState.orderMeta.orderType === 'pickup' ? getPickupChargeAmount() : 0;
-
-  const fixedShipping = getShippingFixedAmount();
-  const shippingNumeric = currentState.orderMeta.shippingMode === 'fixed' ? fixedShipping : 0;
-  const shippingLabel =
-    currentState.orderMeta.shippingMode === 'fixed'
-      ? formatCurrency(fixedShipping)
-      : 'Por confirmar';
+  const shippingData = resolveShipping(currentState);
+  const shippingNumeric = shippingData.shipping;
+  const shippingLabel = shippingData.shippingLabel;
 
   return {
     subtotal,
     packaging,
     pickupCharge,
+    shippingDistanceKmRaw: shippingData.shippingDistanceKmRaw,
+    shippingDistanceKmBilled: shippingData.shippingDistanceKmBilled,
     shipping: shippingNumeric,
     shippingLabel,
     total: subtotal + packaging + pickupCharge + shippingNumeric,
   };
 }
 
-function getShippingFixedAmount() {
-  return Number(MENU_DATA.pricing?.shipping?.fixedAmount || 30);
-}
-
 function getPickupChargeAmount() {
   return Number(MENU_DATA.pricing?.pickupCharge?.amount || 0);
+}
+
+function resolveShipping(currentState) {
+  if (currentState.orderMeta.orderType !== 'delivery') {
+    return {
+      shippingDistanceKmRaw: null,
+      shippingDistanceKmBilled: null,
+      shipping: 0,
+      shippingLabel: 'No aplica',
+    };
+  }
+
+  const customerLocation = currentState.customer?.location;
+  const businessLocation = getBusinessLocation();
+  if (!hasValidCoordinates(customerLocation) || !hasValidCoordinates(businessLocation)) {
+    return {
+      shippingDistanceKmRaw: null,
+      shippingDistanceKmBilled: null,
+      shipping: 0,
+      shippingLabel: 'Por confirmar',
+    };
+  }
+
+  const distanceKmRaw = calculateDistanceKm(businessLocation, customerLocation);
+  const roundedDistanceKm = roundDistanceKm(distanceKmRaw);
+  const displayDistanceKm = formatDistanceKm(distanceKmRaw);
+  const ratePerKm = Number(MENU_DATA.pricing?.deliveryPerKm || 0);
+  const shipping = calculateShippingFromDistance(distanceKmRaw, ratePerKm);
+
+  return {
+    shippingDistanceKmRaw: displayDistanceKm,
+    shippingDistanceKmBilled: roundedDistanceKm,
+    shipping,
+    shippingLabel: `${formatCurrency(shipping)} (${displayDistanceKm} km, cobro ${roundedDistanceKm} km)`,
+  };
+}
+
+function getBusinessLocation() {
+  const location = MENU_DATA.businessLocation;
+  if (!location || typeof location !== 'object') return null;
+  return {
+    lat: Number(location.lat),
+    lng: Number(location.lng),
+    label: location.label || 'Sucursal',
+  };
+}
+
+function hasValidCoordinates(point) {
+  if (!point || typeof point !== 'object') return false;
+  const lat = Number(point.lat);
+  const lng = Number(point.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng);
+}
+
+function calculateDistanceKm(from, to) {
+  const earthRadiusKm = 6371;
+  const lat1 = toRadians(Number(from.lat));
+  const lat2 = toRadians(Number(to.lat));
+  const deltaLat = toRadians(Number(to.lat) - Number(from.lat));
+  const deltaLng = toRadians(Number(to.lng) - Number(from.lng));
+
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+}
+
+function toRadians(value) {
+  return (value * Math.PI) / 180;
+}
+
+function roundDistanceKm(distanceKm) {
+  if (!Number.isFinite(distanceKm) || distanceKm <= 0) return 0;
+  return Math.ceil(distanceKm);
+}
+
+function formatDistanceKm(distanceKm) {
+  if (!Number.isFinite(distanceKm) || distanceKm < 0) return 0;
+  return Number(distanceKm.toFixed(1));
+}
+
+function calculateShippingFromDistance(distanceKm, ratePerKm) {
+  if (!Number.isFinite(ratePerKm) || ratePerKm <= 0) return 0;
+  const roundedDistanceKm = roundDistanceKm(distanceKm);
+  return roundedDistanceKm * ratePerKm;
 }
 
 function isProductAvailableNow(product) {
@@ -738,9 +1008,138 @@ function getLocalDateParts(date, timezone) {
   return { day: dayMap[weekday] ?? 0, hour, minute };
 }
 
+function initMap() {
+  if (!el.locationMap || !el.mapPickerStatus) return;
+  if (!window.L) {
+    el.mapPickerStatus.textContent = 'No se pudo cargar el mapa. Puedes usar ubicación actual o dirección manual.';
+    return;
+  }
+
+  const businessLocation = getBusinessLocation();
+  const selectedLocation = hasValidCoordinates(state.customer.location)
+    ? { lat: Number(state.customer.location.lat), lng: Number(state.customer.location.lng) }
+    : null;
+  const initialCenter =
+    pendingMapSelection ||
+    selectedLocation ||
+    businessLocation || {
+      lat: 19.4326,
+      lng: -99.1332,
+    };
+
+  if (!locationMapInstance) {
+    locationMapInstance = window.L.map(el.locationMap, {
+      zoomControl: true,
+      attributionControl: true,
+    }).setView([initialCenter.lat, initialCenter.lng], 15);
+
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(locationMapInstance);
+
+    locationMapInstance.on('click', (event) => {
+      handleMapClick(event.latlng);
+    });
+    locationMapInstance.on('moveend', () => {
+      if (!pendingMapSelection) refreshMapSelectionUI();
+    });
+  }
+
+  if (businessLocation) {
+    if (!businessMapMarker) {
+      businessMapMarker = window.L.marker([businessLocation.lat, businessLocation.lng], {
+        title: businessLocation.label || 'Negocio',
+      }).addTo(locationMapInstance);
+    } else {
+      businessMapMarker.setLatLng([businessLocation.lat, businessLocation.lng]);
+    }
+  }
+
+  if (pendingMapSelection) {
+    ensureCustomerMapMarker(pendingMapSelection.lat, pendingMapSelection.lng);
+    locationMapInstance.setView([pendingMapSelection.lat, pendingMapSelection.lng], 16);
+  } else {
+    if (customerMapMarker) {
+      locationMapInstance.removeLayer(customerMapMarker);
+      customerMapMarker = null;
+    }
+    locationMapInstance.setView([initialCenter.lat, initialCenter.lng], 15);
+  }
+
+  window.setTimeout(() => {
+    locationMapInstance?.invalidateSize();
+  }, 80);
+}
+
+function handleMapClick(latlng) {
+  if (!latlng) return;
+  pendingMapSelection = { lat: Number(latlng.lat), lng: Number(latlng.lng) };
+  ensureCustomerMapMarker(pendingMapSelection.lat, pendingMapSelection.lng);
+  refreshMapSelectionUI();
+}
+
+function ensureCustomerMapMarker(lat, lng) {
+  if (!locationMapInstance || !window.L) return;
+
+  if (!customerMapMarker) {
+    customerMapMarker = window.L.marker([lat, lng], {
+      draggable: false,
+      title: 'Ubicación de entrega',
+    }).addTo(locationMapInstance);
+    return;
+  }
+
+  customerMapMarker.setLatLng([lat, lng]);
+}
+
+function getCenterSelection() {
+  if (!locationMapInstance) return null;
+  const center = locationMapInstance.getCenter();
+  if (!center) return null;
+  return { lat: Number(center.lat), lng: Number(center.lng) };
+}
+
+function refreshMapSelectionUI() {
+  if (!el.mapPickerStatus) return;
+
+  const selected = pendingMapSelection;
+  if (selected) {
+    el.mapPickerStatus.textContent = `Ubicación seleccionada ✔ (${selected.lat.toFixed(5)}, ${selected.lng.toFixed(5)})`;
+    return;
+  }
+
+  const center = getCenterSelection();
+  if (center) {
+    el.mapPickerStatus.textContent = `Centro del mapa listo: ${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`;
+    return;
+  }
+
+  el.mapPickerStatus.textContent = 'Sin punto seleccionado.';
+}
+
+function setCustomerLocation(lat, lng, source = 'manual') {
+  const safeLat = Number(lat);
+  const safeLng = Number(lng);
+  if (!Number.isFinite(safeLat) || !Number.isFinite(safeLng)) return;
+
+  const mapsUrl = buildMapsLink(safeLat, safeLng);
+  state.customer.location = { lat: safeLat, lng: safeLng, mapsUrl };
+  if (source === 'map') {
+    el.geoStatus.textContent = 'Ubicación seleccionada ✔ desde el mapa.';
+  } else {
+    el.geoStatus.textContent = 'Ubicación capturada. Se enviará el link en tu pedido.';
+  }
+  renderCart();
+  persistState();
+}
+
 function handleGeolocation() {
   if (!navigator.geolocation) {
+    state.customer.location = null;
     el.geoStatus.textContent = 'Tu navegador no soporta ubicación. Escribe dirección manual.';
+    renderCart();
+    persistState();
     return;
   }
 
@@ -750,14 +1149,13 @@ function handleGeolocation() {
     (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      const mapsUrl = buildMapsLink(lat, lng);
-
-      state.customer.location = { lat, lng, mapsUrl };
-      el.geoStatus.textContent = 'Ubicación capturada. Se enviará el link en tu pedido.';
-      persistState();
+      setCustomerLocation(lat, lng, 'geolocation');
     },
     () => {
+      state.customer.location = null;
       el.geoStatus.textContent = 'No se pudo obtener ubicación. Puedes continuar con dirección manual.';
+      renderCart();
+      persistState();
     },
     {
       enableHighAccuracy: true,
@@ -776,6 +1174,8 @@ function validateCheckout(currentState) {
 
   currentState.customer.name = el.customerName?.value.trim() || '';
   currentState.customer.address = el.customerAddress?.value.trim() || '';
+  currentState.customer.betweenStreets = el.customerBetweenStreets?.value.trim() || '';
+  currentState.customer.references = el.customerReferences?.value.trim() || '';
   currentState.customer.notes = el.customerNotes?.value.trim() || '';
 
   if (!currentState.cartItems.length) errors.push('Agrega al menos un producto al pedido.');
@@ -826,6 +1226,14 @@ function generateWhatsAppMessage(currentState, totals) {
     lines.push('No proporcionada');
   }
 
+  if (currentState.customer.betweenStreets) {
+    lines.push(`Entre calles: ${currentState.customer.betweenStreets}`);
+  }
+
+  if (currentState.customer.references) {
+    lines.push(`Referencias: ${currentState.customer.references}`);
+  }
+
   if (currentState.customer.location?.mapsUrl) {
     lines.push(currentState.customer.location.mapsUrl);
   }
@@ -849,7 +1257,13 @@ function generateWhatsAppMessage(currentState, totals) {
   if (totals.pickupCharge > 0) {
     lines.push(`CARGO POR LLEVAR: ${formatCurrency(totals.pickupCharge)}`);
   }
+  if (totals.shippingDistanceKmRaw !== null) {
+    lines.push(`DISTANCIA ESTIMADA: ${totals.shippingDistanceKmRaw} km`);
+  }
   lines.push(`ENVÍO: ${totals.shippingLabel}`);
+  if (currentState.orderMeta.orderType === 'delivery' && totals.shippingDistanceKmRaw === null) {
+    lines.push('Costo de envío pendiente de validación manual.');
+  }
   lines.push(`TOTAL ESTIMADO: ${formatCurrency(totals.total)}`);
 
   if (currentState.customer.notes) {
@@ -901,20 +1315,18 @@ function setHelper(message, isError) {
 function syncCustomerForm() {
   if (el.customerName) el.customerName.value = state.customer.name || '';
   if (el.customerAddress) el.customerAddress.value = state.customer.address || '';
+  if (el.customerBetweenStreets) el.customerBetweenStreets.value = state.customer.betweenStreets || '';
+  if (el.customerReferences) el.customerReferences.value = state.customer.references || '';
   if (el.customerNotes) el.customerNotes.value = state.customer.notes || '';
 
   if (state.customer.location?.mapsUrl && el.geoStatus) {
-    el.geoStatus.textContent = 'Ubicación capturada. Se enviará el link en tu pedido.';
+    el.geoStatus.textContent = 'Ubicación seleccionada ✔. Se enviará el link en tu pedido.';
   }
 }
 
 function syncOrderMetaControls() {
   el.orderTypeInputs.forEach((input) => {
     input.checked = input.value === state.orderMeta.orderType;
-  });
-
-  el.shippingModeInputs.forEach((input) => {
-    input.checked = input.value === state.orderMeta.shippingMode;
   });
 }
 

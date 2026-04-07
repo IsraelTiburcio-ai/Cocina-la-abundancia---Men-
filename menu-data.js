@@ -1,6 +1,12 @@
 window.MENU_DATA = {
   timezone: 'America/Mexico_City',
+  businessLocation: {
+    lat: 19.27681612979457,
+    lng: -99.17129268331983,
+    label: 'Cocina La Abundancia',
+  },
   pricing: {
+    deliveryPerKm: 10,
     packaging: {
       enabledFor: 'all_products',
       mode: 'per_item',
