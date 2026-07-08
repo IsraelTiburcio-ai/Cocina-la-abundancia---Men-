@@ -1,4 +1,4 @@
-window.MENU_DATA = {
+const MENU_DATA = {
   timezone: 'America/Mexico_City',
   businessLocation: {
     lat: 19.27681612979457,
@@ -551,6 +551,8 @@ window.MENU_DATA = {
     { id: 'post-cheesecake-oreo', categoryId: 'postres', name: 'Cheesecake de Oreo', basePrice: 30, availability: { mode: 'always' } },
   ],
 };
+
+window.MENU_DATA = MENU_DATA;
 
 export { MENU_DATA };
 export default MENU_DATA;
