@@ -1,8 +1,7 @@
 import { state, persistState } from './state.js';
 import { el } from './dom.js';
-import { setLastMapTrigger } from './menu-render.js';
 import { getBusinessLocation, hasValidCoordinates } from './cart.js';
-import { lockBodyScroll, unlockBodyScroll, restoreFocus, setHelper, announceStatus } from './ui-helpers.js';
+import { lockBodyScroll, unlockBodyScroll, restoreFocus } from './ui-helpers.js';
 import { renderCart } from './menu-render.js';
 
 let locationMapInstance = null;
@@ -23,7 +22,6 @@ export function openMapModal(trigger = document.activeElement) {
   if (!el.mapPickerModal || !el.mapPickerBackdrop) return;
 
   lastMapTrigger = trigger instanceof HTMLElement ? trigger : null;
-  setLastMapTrigger(lastMapTrigger);
   lockBodyScroll();
   el.mapPickerModal.hidden = false;
   el.mapPickerBackdrop.hidden = false;
