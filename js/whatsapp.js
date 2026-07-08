@@ -129,6 +129,11 @@ export function handleSendOrder() {
   const message = generateWhatsAppMessage(state, totals);
   const url = `https://wa.me/${ORDER_PHONE}?text=${encodeURIComponent(message)}`;
 
+  if (url.length > 2000) {
+    setHelper('Tu pedido es muy largo para WhatsApp. Reduce productos o mándalo en 2 partes.', true);
+    return;
+  }
+
   const popup = window.open(url, '_blank', 'noopener,noreferrer');
   if (!popup) {
     setHelper('No se pudo abrir WhatsApp. Copia el mensaje y mándalo al 55 7334 2834.', true);
