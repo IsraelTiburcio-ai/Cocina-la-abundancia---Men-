@@ -15,7 +15,7 @@ Static landing page for a Mexican restaurant with a WhatsApp order flow. No buil
 - `script.js` — order sheet, cart, Leaflet map picker, localStorage persistence, WhatsApp message builder
 - `menu-data.js` — exposes `window.MENU_DATA`: products, categories, pricing, business coords, schedules
 - `Menú V1/` — unused legacy images, not referenced anywhere; safe to delete
-- `Menú V2/` — also not referenced in HTML; exists only to satisfy the `validate-assets` workflow job that walks this directory. Keep the folder, but its contents are free to remove/replace
+- `Menu-V2/` — also not referenced in HTML; exists only to satisfy the `validate-assets` workflow job that walks this directory. Keep the folder, but its contents are free to remove/replace
 - `Portada.png` — only critical image asset loaded from repo root
 
 ## Phone number
@@ -35,7 +35,7 @@ There is no staging environment. Every push to `main` is live.
 No dev server. Open `index.html` directly in a browser, or `python3 -m http.server` from the repo root. The site needs network access for Leaflet CDN, Google Maps embed, and Cloudinary images.
 
 ## Conventions / gotchas
-- Folder names use Spanish accents and spaces (`Menú V1`, `Menú V2`). README flags this as a GitHub Pages risk. Do not rename without also updating `deploy.yml`'s V2 detection logic.
+- Folder names used to use Spanish accents and spaces (`Menú V1`, `Menú V2`). `Menú V1` was removed entirely (Fase 5.1) and `Menú V2` was renamed to ASCII `Menu-V2` (Fase 5.2). If you re-introduce either, also update `deploy.yml`'s V2 detection logic.
 - Order state is persisted in `localStorage` under key `cla_order_state_v2` with a 24h TTL (`STORAGE_KEY`, `STORAGE_TTL_MS` in `script.js`).
 - Prices are integers in MXN. Shipping is `$10/km` from the coords in `menu-data.js#businessLocation`; packaging is `$10/item`; pickup has a fixed charge (currently `$0`).
 - Category availability uses `availability.mode = 'schedule'` with `days` as JS day-of-week numbers (0=Sun … 6=Sat). Pozole is `[5,6]`, Antojitos is `[5,6]`.

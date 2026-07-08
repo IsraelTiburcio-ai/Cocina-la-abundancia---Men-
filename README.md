@@ -4,7 +4,7 @@
 - El sitio se publica automáticamente con GitHub Actions.
 - Cada `push` a la rama `main` dispara el workflow de deploy.
 - El workflow publica el sitio estático desde la raíz del proyecto.
-- Luego valida que carguen assets críticos (`Portada.png`, `styles.css`, `script.js`, `menu-data.js` y archivos de `Menú V2`).
+- Luego valida que carguen assets críticos (`Portada.png`, `styles.css`, `script.js`, `menu-data.js` y archivos de `Menu-V2`).
 
 ## Cómo actualizar promociones
 - Edita textos y secciones visibles en `index.html`.
@@ -17,7 +17,7 @@
 - El deploy corre solo y publica los cambios.
 
 ## Cómo cambiar imágenes
-- Reemplaza imágenes en la raíz o en `Menú V2`.
+- Reemplaza imágenes en la raíz o en `Menu-V2`.
 - Si cambian nombres, actualiza referencias en `index.html` y/o `styles.css`.
 - Haz commit y push a `main`.
 
