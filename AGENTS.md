@@ -3,7 +3,17 @@
 Static landing page for a Mexican restaurant with a WhatsApp order flow. No build step, no package manager, no tests, no linter.
 
 ## Local skills (not in the repo)
-There are skill definitions under `.agents/skills/` (e.g. `seo/`, `accessibility/`, `frontend-design/`) that are **not tracked by git** — they're opencode session artifacts. They do NOT appear in the global `<available_skills>` list (which only contains `customize-opencode`). Before starting a task that could match one of them (SEO, accessibility, frontend-design), do `ls .agents/skills/` and consider loading the relevant `SKILL.md`. Past session that didn't: an SEO audit missed the local SEO skill's rules on title/description length and hreflang.
+There are skill definitions under `.agents/skills/` that are **not tracked by git** — they're opencode session artifacts. They do NOT appear in the global `<available_skills>` list (which only contains `customize-opencode`). Before starting a task that could match one, do `ls .agents/skills/` and consider loading the relevant `SKILL.md`. Past session that didn't: an SEO audit missed the local SEO skill's rules on title/description length and hreflang.
+
+Currently available:
+
+| Skill | Trigger phrases | Path |
+|-------|-----------------|------|
+| `seo` | "improve SEO", "optimize for search", "fix meta tags", "add structured data", "sitemap optimization" | `.agents/skills/seo/SKILL.md` |
+| `accessibility` | "improve accessibility", "a11y audit", "WCAG", "screen reader", "aria", "keyboard nav" | `.agents/skills/accessibility/SKILL.md` (+ `references/`) |
+| `frontend-design` | "redesign", "improve the UI", "modernize the look", "make it more premium", visual design tasks | `.agents/skills/frontend-design/SKILL.md` |
+
+Other skills may appear here in the future (e.g. `core-web-vitals`, `web-quality-audit` are referenced as links inside `seo/SKILL.md` but not present locally). If a task fits a known domain, `ls .agents/skills/` first.
 
 ## Stack
 - HTML + CSS + vanilla JS (no framework, no bundler)
