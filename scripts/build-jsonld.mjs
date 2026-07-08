@@ -27,7 +27,7 @@ const restaurant = {
   '@id': `${SITE_URL}#restaurant`,
   name: 'Cocina La Abundancia',
   description:
-    'Comida mexicana casera en zona de entrega local. Desayunos, menú a la carta, pozole, antojitos, bebidas y postres. Pedidos por WhatsApp con envío a domicilio.',
+    'Comida mexicana casera: desayunos, pozole, antojitos y más. Pedidos por WhatsApp con envío a domicilio. Pide tu menú del día hoy.',
   url: SITE_URL,
   image: `${SITE_URL}Portada.png`,
   logo: `${SITE_URL}Portada.png`,
