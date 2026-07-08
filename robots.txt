@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://israeltiburcio-ai.github.io/Cocina-la-abundancia---Men-/sitemap.xml
