@@ -198,6 +198,10 @@ main {
   position: relative;
   min-height: clamp(420px, 70vh, 680px);
   background-image: url("Portada.png");
+  background-image: image-set(
+    url("Portada.webp") type("image/webp"),
+    url("Portada.png") type("image/png")
+  );
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
