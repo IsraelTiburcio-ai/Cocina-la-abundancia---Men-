@@ -13,7 +13,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
-    <link rel="stylesheet" href="styles.css?v=20260407-1" />
+    <link rel="stylesheet" href="styles.css?v=20260702-1" />
   </head>
   <body>
     <header class="hero" id="inicio">
@@ -74,15 +74,33 @@
         </article>
       </section>
 
+      <section class="trust-strip reveal" aria-label="Información de servicio">
+        <a href="https://wa.me/525573342834" target="_blank" rel="noopener noreferrer">
+          <span aria-hidden="true">💬</span>
+          <span><strong>WhatsApp</strong> 55 7334 2834</span>
+        </a>
+        <p><span aria-hidden="true">💵</span><span><strong>Pagos</strong> Efectivo y transferencia</span></p>
+        <p><span aria-hidden="true">🕒</span><span><strong>Horarios</strong> Consulta cada sección</span></p>
+        <p><span aria-hidden="true">🚚</span><span><strong>Entrega local</strong> Envío confirmado por WhatsApp</span></p>
+        <a href="https://maps.app.goo.gl/yn5CUeJiMqTZsL9v9" target="_blank" rel="noopener noreferrer">
+          <span aria-hidden="true">📍</span>
+          <span><strong>Ubicación</strong> Ver en el mapa</span>
+        </a>
+      </section>
+
       <section class="menu-section reveal" id="desayunos">
         <div class="section-head">
           <h2>Desayunos</h2>
           <p class="schedule">Lunes a sábado · 9:00 am a 12:00 pm</p>
         </div>
-        <div class="menu-visual">
-          <img src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586699/DESAYUNOS_1_ukxsbv.png" alt="Menú de desayunos" />
-          <span class="visual-chip">Incluye bebida y fruta</span>
-        </div>
+        <div class="landing-product-grid" data-menu-category="desayunos"></div>
+        <details class="visual-menu-details">
+          <summary>Ver menú visual</summary>
+          <div class="menu-visual">
+            <img loading="lazy" src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586699/DESAYUNOS_1_ukxsbv.png" alt="Menú visual de desayunos" />
+            <span class="visual-chip">Incluye bebida y fruta</span>
+          </div>
+        </details>
       </section>
 
       <section class="menu-section reveal" id="carta">
@@ -90,10 +108,14 @@
           <h2>Menú a la carta</h2>
           <p class="schedule">Todos los días · 9:00 am a 5:00 pm</p>
         </div>
-        <div class="menu-visual">
-          <img src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586796/Menu%CC%81_a_la_carta_i5ec87.png" alt="Menú a la carta" />
-          <span class="visual-chip">Especialidades caseras</span>
-        </div>
+        <div class="landing-product-grid" data-menu-category="carta"></div>
+        <details class="visual-menu-details">
+          <summary>Ver menú visual</summary>
+          <div class="menu-visual">
+            <img loading="lazy" src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586796/Menu%CC%81_a_la_carta_i5ec87.png" alt="Menú visual a la carta" />
+            <span class="visual-chip">Especialidades caseras</span>
+          </div>
+        </details>
       </section>
 
       <section class="menu-section reveal" id="pozole">
@@ -101,10 +123,14 @@
           <h2>Pozole y pancita</h2>
           <p class="schedule">Viernes y sábado · 10:00 am a 10:00 pm</p>
         </div>
-        <div class="menu-visual">
-          <img src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586798/Pozole_y_Pancita_mp4xic.png" alt="Pozole y pancita" />
-          <span class="visual-chip">Sujeto a disponibilidad</span>
-        </div>
+        <div class="landing-product-grid" data-menu-category="pozole-pancita"></div>
+        <details class="visual-menu-details">
+          <summary>Ver menú visual</summary>
+          <div class="menu-visual">
+            <img loading="lazy" src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586798/Pozole_y_Pancita_mp4xic.png" alt="Menú visual de pozole y pancita" />
+            <span class="visual-chip">Sujeto a disponibilidad</span>
+          </div>
+        </details>
       </section>
 
       <section class="menu-section reveal" id="antojitos">
@@ -112,20 +138,24 @@
           <h2>Antojitos</h2>
           <p class="schedule">Viernes y sábado · 4:00 pm a 10:30 pm</p>
         </div>
-        <div class="menu-stack" aria-label="Menús de antojitos">
-          <div class="menu-visual">
-            <img src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586793/Antojitos1_t2jwcj.png" alt="Menú de antojitos 1" />
-            <span class="visual-chip">Quesadillas y gorditas</span>
+        <div class="landing-product-grid" data-menu-category="antojitos"></div>
+        <details class="visual-menu-details">
+          <summary>Ver menús visuales</summary>
+          <div class="menu-stack" aria-label="Menús visuales de antojitos">
+            <div class="menu-visual">
+              <img loading="lazy" src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586793/Antojitos1_t2jwcj.png" alt="Menú visual de antojitos 1" />
+              <span class="visual-chip">Quesadillas y gorditas</span>
+            </div>
+            <div class="menu-visual">
+              <img loading="lazy" src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586793/Antojitoa_2_Sopes_Huaraches_y_Pambazos_y1yxye.png" alt="Menú visual de antojitos 2" />
+              <span class="visual-chip">Sopes, huaraches y pambazos</span>
+            </div>
+            <div class="menu-visual">
+              <img loading="lazy" src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586795/Antojitos_3_Tostadas_Tacos_y_tortas_nhizcd.png" alt="Menú visual de antojitos 3" />
+              <span class="visual-chip">Tostadas, tacos y tortas</span>
+            </div>
           </div>
-          <div class="menu-visual">
-            <img src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586793/Antojitoa_2_Sopes_Huaraches_y_Pambazos_y1yxye.png" alt="Menú de antojitos 2" />
-            <span class="visual-chip">Sopes, huaraches y pambazos</span>
-          </div>
-          <div class="menu-visual">
-            <img src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586795/Antojitos_3_Tostadas_Tacos_y_tortas_nhizcd.png" alt="Menú de antojitos 3" />
-            <span class="visual-chip">Tostadas, tacos y tortas</span>
-          </div>
-        </div>
+        </details>
       </section>
 
       <section class="menu-section reveal" id="bebidas-postres">
@@ -133,10 +163,23 @@
           <h2>Bebidas y postres</h2>
           <p class="schedule">Disponibles todo el día</p>
         </div>
-        <div class="menu-visual">
-          <img src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586796/Bebidas_y_Postres_ulq1nn.png" alt="Menú de bebidas y postres" />
-          <span class="visual-chip">Refrescos, aguas, flan, pay y cheesecake</span>
+        <div class="landing-menu-groups">
+          <div>
+            <h3>Bebidas</h3>
+            <div class="landing-product-grid" data-menu-category="bebidas"></div>
+          </div>
+          <div>
+            <h3>Postres</h3>
+            <div class="landing-product-grid" data-menu-category="postres"></div>
+          </div>
         </div>
+        <details class="visual-menu-details">
+          <summary>Ver menú visual</summary>
+          <div class="menu-visual">
+            <img loading="lazy" src="https://res.cloudinary.com/de7zwptxx/image/upload/v1775586796/Bebidas_y_Postres_ulq1nn.png" alt="Menú visual de bebidas y postres" />
+            <span class="visual-chip">Refrescos, aguas, flan, pay y cheesecake</span>
+          </div>
+        </details>
       </section>
 
       <section class="about-section reveal" id="conocenos">
@@ -186,6 +229,14 @@
       <small>&copy; 2026. Todos los derechos reservados.</small>
     </footer>
 
+    <div
+      class="order-toast"
+      id="order-announcement"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
     <button
       class="mobile-order-bar"
       id="open-order-sheet"
@@ -221,9 +272,10 @@
       </header>
 
       <nav class="order-steps" aria-label="Pasos de pedido">
-        <button type="button" class="order-step is-active" data-step="menu">Menú</button>
-        <button type="button" class="order-step" data-step="cart">Resumen</button>
-        <button type="button" class="order-step" data-step="checkout">Datos</button>
+        <button type="button" class="order-step is-active" data-step="menu"><span>1</span> Elige</button>
+        <button type="button" class="order-step" data-step="cart"><span>2</span> Revisa</button>
+        <button type="button" class="order-step" data-step="checkout"><span>3</span> Datos</button>
+        <span class="order-step order-step-final" id="send-step"><span>4</span> Envía</span>
       </nav>
 
       <div class="order-sheet-scroll" id="order-sheet-scroll">
@@ -255,7 +307,7 @@
               </label>
             </fieldset>
 
-            <fieldset class="checkout-group">
+            <fieldset class="checkout-group" data-order-section="delivery" hidden>
               <legend>Envío</legend>
               <p class="shipping-note">Costo de envío: <strong>$10 por kilómetro</strong> (se confirma por WhatsApp).</p>
             </fieldset>
@@ -265,41 +317,48 @@
               <input id="customer-name" name="name" type="text" autocomplete="name" required />
             </label>
 
-            <label>
-              Dirección de entrega
-              <textarea
-                id="customer-address"
-                name="address"
-                rows="2"
-                placeholder="Calle, número, colonia y referencias"
-              ></textarea>
+            <label data-order-section="pickup" hidden>
+              Hora estimada de recolección
+              <input id="pickup-time" name="pickup-time" type="time" />
             </label>
 
-            <label>
-              Entre calles
-              <input
-                id="customer-between-streets"
-                name="between-streets"
-                type="text"
-                placeholder="Ej. Av. Principal y Calle 5"
-              />
-            </label>
+            <div class="conditional-fields" data-order-section="delivery" hidden>
+              <label>
+                Dirección de entrega
+                <textarea
+                  id="customer-address"
+                  name="address"
+                  rows="2"
+                  placeholder="Calle, número y colonia"
+                ></textarea>
+              </label>
 
-            <label>
-              Referencias
-              <textarea
-                id="customer-references"
-                name="references"
-                rows="2"
-                placeholder="Portón negro, junto a la tienda, etc."
-              ></textarea>
-            </label>
+              <label>
+                Entre calles
+                <input
+                  id="customer-between-streets"
+                  name="between-streets"
+                  type="text"
+                  placeholder="Ej. Av. Principal y Calle 5"
+                />
+              </label>
 
-            <button class="geo-btn" id="geo-btn" type="button">Usar mi ubicación actual</button>
-            <button class="geo-btn geo-btn-secondary" id="map-picker-btn" type="button">
-              Elegir ubicación en el mapa
-            </button>
-            <p class="geo-status" id="geo-status">Puedes enviar dirección escrita o compartir ubicación.</p>
+              <label>
+                Referencias
+                <textarea
+                  id="customer-references"
+                  name="references"
+                  rows="2"
+                  placeholder="Portón negro, junto a la tienda, etc."
+                ></textarea>
+              </label>
+
+              <button class="geo-btn" id="geo-btn" type="button">Usar mi ubicación actual</button>
+              <button class="geo-btn geo-btn-secondary" id="map-picker-btn" type="button">
+                Elegir ubicación en el mapa
+              </button>
+              <p class="geo-status" id="geo-status">Puedes enviar dirección escrita o compartir ubicación.</p>
+            </div>
 
             <label>
               Notas del pedido
@@ -329,7 +388,7 @@
         </div>
         <div class="order-footer-actions">
           <button class="ghost-btn" id="order-next-btn" type="button">Continuar</button>
-          <button class="wa-submit-btn" id="send-order-btn" type="button">Enviar por WhatsApp</button>
+          <button class="wa-submit-btn" id="send-order-btn" type="button">Enviar pedido por WhatsApp</button>
         </div>
         <p class="order-helper" id="order-helper">
           El total es estimado. El envío y disponibilidad se confirman por WhatsApp.
@@ -400,11 +459,11 @@
       </footer>
     </section>
 
-    <script src="menu-data.js?v=20260407-1"></script>
+    <script src="menu-data.js?v=20260702-1"></script>
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       crossorigin=""
     ></script>
-    <script src="script.js?v=20260407-1"></script>
+    <script src="script.js?v=20260702-1"></script>
   </body>
 </html>

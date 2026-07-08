@@ -7,6 +7,7 @@ const sections = document.querySelectorAll('section[id]');
 const ORDER_PHONE = '525573342834';
 const STORAGE_KEY = 'cla_order_state_v2';
 const STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 let modalOpenDepth = 0;
 let lockedScrollY = 0;
 let touchGuardsInstalled = false;
@@ -14,6 +15,10 @@ let locationMapInstance = null;
 let businessMapMarker = null;
 let customerMapMarker = null;
 let pendingMapSelection = null;
+let lastOrderTrigger = null;
+let lastConfigTrigger = null;
+let lastMapTrigger = null;
+let announcementTimer = null;
 
 const DEFAULT_ORDER_META = {
   orderType: 'local',
@@ -27,6 +32,7 @@ const state = {
     address: '',
     betweenStreets: '',
     references: '',
+    pickupTime: '',
     notes: '',
     location: null,
   },
@@ -43,6 +49,8 @@ const state = {
 
 const el = {
   openOrderBtns: document.querySelectorAll('[data-order-trigger]'),
+  landingProductGrids: document.querySelectorAll('[data-menu-category]'),
+  announcement: document.getElementById('order-announcement'),
   orderBarMeta: document.getElementById('order-bar-meta'),
   orderSheet: document.getElementById('order-sheet'),
   orderBackdrop: document.getElementById('order-backdrop'),
@@ -79,6 +87,8 @@ const el = {
   mapPickerStatus: document.getElementById('map-picker-status'),
   locationMap: document.getElementById('location-map'),
   orderTypeInputs: document.querySelectorAll('input[name="order-type"]'),
+  orderTypeSections: document.querySelectorAll('[data-order-section]'),
+  pickupTime: document.getElementById('pickup-time'),
   configSheet: document.getElementById('config-sheet'),
   configBackdrop: document.getElementById('config-backdrop'),
   configTitle: document.getElementById('config-title'),
@@ -180,14 +190,17 @@ function initOrderModule() {
 
   renderCategoryChips();
   renderProducts();
+  renderLandingMenus();
   renderCart();
   renderOrderBar();
   syncCustomerForm();
   syncOrderMetaControls();
+  syncOrderTypeFields();
+  restoreInitialAnchor();
 
   el.openOrderBtns.forEach((trigger) => {
     trigger.addEventListener('click', () => {
-      openOrderSheet(state.cartItems.length ? 'cart' : 'menu');
+      openOrderSheet(state.cartItems.length ? 'cart' : 'menu', trigger);
     });
   });
 
@@ -205,6 +218,7 @@ function initOrderModule() {
     input.addEventListener('change', () => {
       if (!input.checked) return;
       state.orderMeta.orderType = input.value;
+      syncOrderTypeFields();
       renderCart();
       persistState();
     });
@@ -218,23 +232,8 @@ function initOrderModule() {
     renderProducts();
   });
 
-  el.productGrid?.addEventListener('click', (event) => {
-    const addBtn = event.target.closest('button[data-add-product]');
-    if (!addBtn) return;
-
-    const product = MENU_DATA.products.find((p) => p.id === addBtn.dataset.addProduct);
-    if (!product) return;
-
-    const availability = isProductAvailableNow(product);
-    if (!availability.available) return;
-
-    if (Array.isArray(product.modifiers) && product.modifiers.length > 0) {
-      openConfigSheet(product);
-      return;
-    }
-
-    addItem(product, [], 1);
-  });
+  el.productGrid?.addEventListener('click', handleProductAdd);
+  el.landingProductGrids.forEach((grid) => grid.addEventListener('click', handleProductAdd));
 
   el.cartList?.addEventListener('click', (event) => {
     const plus = event.target.closest('button[data-cart-plus]');
@@ -259,6 +258,7 @@ function initOrderModule() {
     el.customerAddress,
     el.customerBetweenStreets,
     el.customerReferences,
+    el.pickupTime,
     el.customerNotes,
   ].forEach((field) => {
     field?.addEventListener('input', () => {
@@ -266,13 +266,14 @@ function initOrderModule() {
       state.customer.address = el.customerAddress?.value.trim() || '';
       state.customer.betweenStreets = el.customerBetweenStreets?.value.trim() || '';
       state.customer.references = el.customerReferences?.value.trim() || '';
+      state.customer.pickupTime = el.pickupTime?.value || '';
       state.customer.notes = el.customerNotes?.value.trim() || '';
       persistState();
     });
   });
 
   el.geoBtn?.addEventListener('click', handleGeolocation);
-  el.mapPickerBtn?.addEventListener('click', openMapModal);
+  el.mapPickerBtn?.addEventListener('click', () => openMapModal(el.mapPickerBtn));
   el.closeMapPickerBtn?.addEventListener('click', closeMapModal);
   el.cancelMapPickerBtn?.addEventListener('click', closeMapModal);
   el.mapPickerBackdrop?.addEventListener('click', closeMapModal);
@@ -294,13 +295,27 @@ function initOrderModule() {
     }
 
     if (event.key === 'Tab') {
-      if (!el.mapPickerModal?.hidden) {
+      if (!el.configSheet?.hidden) {
+        trapFocus(event, el.configSheet);
+      } else if (!el.mapPickerModal?.hidden) {
         trapFocus(event, el.mapPickerModal);
       } else if (!el.orderSheet?.hidden) {
         trapFocus(event, el.orderSheet);
       }
     }
   });
+}
+
+function restoreInitialAnchor() {
+  const anchorId = window.location.hash.slice(1);
+  if (!anchorId) return;
+
+  const scrollToAnchor = () => {
+    document.getElementById(anchorId)?.scrollIntoView({ block: 'start' });
+  };
+
+  requestAnimationFrame(() => requestAnimationFrame(scrollToAnchor));
+  window.addEventListener('load', scrollToAnchor, { once: true });
 }
 
 function setActivePanel(panelName) {
@@ -314,12 +329,14 @@ function setActivePanel(panelName) {
     panel.classList.toggle('is-active', panel.dataset.panel === panelName);
   });
 
+  document.getElementById('send-step')?.classList.toggle('is-next', panelName === 'checkout');
   if (panelName === 'menu') el.nextBtn.textContent = 'Ir al resumen';
   if (panelName === 'cart') el.nextBtn.textContent = 'Ir a datos';
   if (panelName === 'checkout') el.nextBtn.textContent = 'Volver al resumen';
 }
 
-function openOrderSheet(initialPanel = 'menu') {
+function openOrderSheet(initialPanel = 'menu', trigger = document.activeElement) {
+  lastOrderTrigger = trigger instanceof HTMLElement ? trigger : null;
   lockBodyScroll();
   el.orderSheet.hidden = false;
   el.orderBackdrop.hidden = false;
@@ -345,6 +362,7 @@ function closeOrderSheet() {
       el.orderSheet.hidden = true;
       el.orderBackdrop.hidden = true;
       unlockBodyScroll();
+      restoreFocus(lastOrderTrigger);
     }
   }, 200);
 }
@@ -385,28 +403,61 @@ function renderCategoryChips() {
 
 function renderProducts() {
   const products = MENU_DATA.products.filter((p) => p.categoryId === state.activeCategory);
-
-  const html = products
-    .map((product) => {
-      const availability = isProductAvailableNow(product);
-      const disabled = availability.available ? '' : 'disabled';
-      const statusText = availability.available ? '' : `<p class="product-status">${availability.label}</p>`;
-      const hasConfig = Array.isArray(product.modifiers) && product.modifiers.length;
-
-      return `
-        <article class="product-card ${availability.available ? '' : 'is-disabled'}">
-          <h4>${product.name}</h4>
-          <p class="product-price">${formatCurrency(product.basePrice)}</p>
-          ${product.description ? `<p class="product-desc">${product.description}</p>` : ''}
-          ${hasConfig ? '<p class="product-desc">Configurable</p>' : ''}
-          ${statusText}
-          <button type="button" data-add-product="${product.id}" ${disabled}>Agregar</button>
-        </article>
-      `;
-    })
-    .join('');
+  const html = products.map((product) => renderProductCard(product)).join('');
 
   el.productGrid.innerHTML = html || '<p>No hay productos en esta categoría.</p>';
+}
+
+function renderLandingMenus() {
+  el.landingProductGrids.forEach((grid) => {
+    const categoryId = grid.dataset.menuCategory;
+    const products = MENU_DATA.products.filter((product) => product.categoryId === categoryId);
+    grid.innerHTML =
+      products.map((product) => renderProductCard(product, 'landing-product-card')).join('') ||
+      '<p>No hay productos en esta categoría.</p>';
+  });
+}
+
+function renderProductCard(product, extraClass = '') {
+  const availability = isProductAvailableNow(product);
+  const disabled = availability.available ? '' : 'disabled';
+  const statusText = availability.available
+    ? ''
+    : `<p class="product-status">${availability.label}</p>`;
+  const hasConfig = Array.isArray(product.modifiers) && product.modifiers.length;
+
+  return `
+    <article class="product-card ${extraClass} ${availability.available ? '' : 'is-disabled'}">
+      <div class="product-card-copy">
+        <h4>${product.name}</h4>
+        ${product.description ? `<p class="product-desc">${product.description}</p>` : ''}
+        ${hasConfig ? '<p class="product-config-label">Elige tus opciones al agregar</p>' : ''}
+        ${statusText}
+      </div>
+      <div class="product-card-action">
+        <p class="product-price">${formatCurrency(product.basePrice)}</p>
+        <button type="button" data-add-product="${product.id}" ${disabled}>Agregar</button>
+      </div>
+    </article>
+  `;
+}
+
+function handleProductAdd(event) {
+  const addBtn = event.target.closest('button[data-add-product]');
+  if (!addBtn) return;
+
+  const product = MENU_DATA.products.find((entry) => entry.id === addBtn.dataset.addProduct);
+  if (!product) return;
+
+  const availability = isProductAvailableNow(product);
+  if (!availability.available) return;
+
+  if (Array.isArray(product.modifiers) && product.modifiers.length > 0) {
+    openConfigSheet(product, addBtn);
+    return;
+  }
+
+  addItem(product, [], 1);
 }
 
 function renderCart() {
@@ -467,16 +518,21 @@ function renderOrderBar() {
 
   const qty = state.cartItems.reduce((sum, item) => sum + item.qty, 0);
   const totals = calculateTotals(state);
+  const orderBar = document.getElementById('open-order-sheet');
 
   if (!qty) {
     el.orderBarMeta.textContent = 'Sin productos';
+    orderBar?.setAttribute('aria-label', 'Realizar pedido, sin productos');
     return;
   }
 
-  el.orderBarMeta.textContent = `${qty} artículo${qty > 1 ? 's' : ''} · ${formatCurrency(totals.total)}`;
+  const summary = `${qty} artículo${qty > 1 ? 's' : ''} · ${formatCurrency(totals.total)}`;
+  el.orderBarMeta.textContent = summary;
+  orderBar?.setAttribute('aria-label', `Realizar pedido, ${summary}`);
 }
 
-function openConfigSheet(product) {
+function openConfigSheet(product, trigger = document.activeElement) {
+  lastConfigTrigger = trigger instanceof HTMLElement ? trigger : null;
   state.config.product = product;
   state.config.qty = 1;
   el.configError.textContent = '';
@@ -530,6 +586,7 @@ function openConfigSheet(product) {
   requestAnimationFrame(() => {
     el.configSheet.classList.add('is-open');
     el.configBackdrop.classList.add('is-open');
+    el.closeConfigBtn?.focus();
   });
 }
 
@@ -541,12 +598,14 @@ function closeConfigSheet() {
     el.configSheet.hidden = true;
     el.configBackdrop.hidden = true;
     unlockBodyScroll();
+    restoreFocus(lastConfigTrigger);
   }, 180);
 }
 
-function openMapModal() {
+function openMapModal(trigger = document.activeElement) {
   if (!el.mapPickerModal || !el.mapPickerBackdrop) return;
 
+  lastMapTrigger = trigger instanceof HTMLElement ? trigger : null;
   lockBodyScroll();
   el.mapPickerModal.hidden = false;
   el.mapPickerBackdrop.hidden = false;
@@ -575,6 +634,7 @@ function closeMapModal() {
     el.mapPickerModal.hidden = true;
     el.mapPickerBackdrop.hidden = true;
     unlockBodyScroll();
+    restoreFocus(lastMapTrigger);
   }, 180);
 }
 
@@ -713,7 +773,6 @@ function handleAddConfiguredProduct() {
 
   addItem(product, selectedModifiers, state.config.qty);
   closeConfigSheet();
-  setActivePanel('cart');
 }
 
 function collectSelectedModifiers(product) {
@@ -769,6 +828,7 @@ function addItem(product, selectedModifiers = [], qty = 1) {
   state.cartItems.push(item);
   renderCart();
   setHelper('Producto agregado al pedido.', false);
+  announceStatus('Producto agregado al pedido');
 }
 
 function removeItem(itemId) {
@@ -1176,17 +1236,34 @@ function validateCheckout(currentState) {
   currentState.customer.address = el.customerAddress?.value.trim() || '';
   currentState.customer.betweenStreets = el.customerBetweenStreets?.value.trim() || '';
   currentState.customer.references = el.customerReferences?.value.trim() || '';
+  currentState.customer.pickupTime = el.pickupTime?.value || '';
   currentState.customer.notes = el.customerNotes?.value.trim() || '';
 
-  if (!currentState.cartItems.length) errors.push('Agrega al menos un producto al pedido.');
-  if (!currentState.customer.name) errors.push('Tu nombre es obligatorio.');
+  if (!currentState.cartItems.length) {
+    errors.push({
+      message: 'Agrega al menos un producto al pedido.',
+      panel: 'menu',
+      target: () => el.productGrid?.querySelector('button[data-add-product]:not(:disabled)'),
+    });
+  }
+  if (!currentState.customer.name) {
+    errors.push({
+      message: 'Tu nombre es obligatorio.',
+      panel: 'checkout',
+      target: () => el.customerName,
+    });
+  }
 
   if (
     currentState.orderMeta.orderType === 'delivery' &&
     !currentState.customer.address &&
     !currentState.customer.location?.mapsUrl
   ) {
-    errors.push('Para envío a domicilio, ingresa dirección o comparte tu ubicación.');
+    errors.push({
+      message: 'Para envío a domicilio, ingresa dirección o comparte tu ubicación.',
+      panel: 'checkout',
+      target: () => el.customerAddress,
+    });
   }
 
   persistState();
@@ -1197,8 +1274,13 @@ function handleSendOrder() {
   const errors = validateCheckout(state);
 
   if (errors.length) {
-    setHelper(errors[0], true);
-    if (state.ui.panel !== 'checkout') setActivePanel('checkout');
+    const firstError = errors[0];
+    setHelper(firstError.message, true);
+    announceStatus(firstError.message);
+    setActivePanel(firstError.panel);
+    requestAnimationFrame(() => {
+      firstError.target()?.focus();
+    });
     return;
   }
 
@@ -1217,25 +1299,30 @@ function generateWhatsAppMessage(currentState, totals) {
   lines.push(`Mi nombre es ${currentState.customer.name}`);
   lines.push('');
   lines.push(`Tipo de pedido: ${formatOrderType(currentState.orderMeta.orderType)}`);
-  lines.push('');
-  lines.push('Dirección:');
 
-  if (currentState.customer.address) {
-    lines.push(currentState.customer.address);
-  } else {
-    lines.push('No proporcionada');
+  if (currentState.orderMeta.orderType === 'pickup' && currentState.customer.pickupTime) {
+    lines.push(`Hora estimada de recolección: ${currentState.customer.pickupTime}`);
   }
 
-  if (currentState.customer.betweenStreets) {
-    lines.push(`Entre calles: ${currentState.customer.betweenStreets}`);
-  }
+  if (currentState.orderMeta.orderType === 'delivery') {
+    lines.push('');
+    lines.push('Dirección de entrega:');
 
-  if (currentState.customer.references) {
-    lines.push(`Referencias: ${currentState.customer.references}`);
-  }
+    if (currentState.customer.address) {
+      lines.push(currentState.customer.address);
+    }
 
-  if (currentState.customer.location?.mapsUrl) {
-    lines.push(currentState.customer.location.mapsUrl);
+    if (currentState.customer.betweenStreets) {
+      lines.push(`Entre calles: ${currentState.customer.betweenStreets}`);
+    }
+
+    if (currentState.customer.references) {
+      lines.push(`Referencias: ${currentState.customer.references}`);
+    }
+
+    if (currentState.customer.location?.mapsUrl) {
+      lines.push(currentState.customer.location.mapsUrl);
+    }
   }
 
   lines.push('');
@@ -1271,6 +1358,9 @@ function generateWhatsAppMessage(currentState, totals) {
     lines.push('Notas:');
     lines.push(currentState.customer.notes);
   }
+
+  lines.push('');
+  lines.push('Entiendo que la disponibilidad y el envío se confirman por WhatsApp.');
 
   return lines.join('\n');
 }
@@ -1312,11 +1402,25 @@ function setHelper(message, isError) {
   el.helper.classList.toggle('is-error', Boolean(isError));
 }
 
+function announceStatus(message) {
+  if (!el.announcement) return;
+  window.clearTimeout(announcementTimer);
+  el.announcement.textContent = '';
+  requestAnimationFrame(() => {
+    el.announcement.textContent = message;
+    el.announcement.classList.add('is-visible');
+    announcementTimer = window.setTimeout(() => {
+      el.announcement.classList.remove('is-visible');
+    }, 2600);
+  });
+}
+
 function syncCustomerForm() {
   if (el.customerName) el.customerName.value = state.customer.name || '';
   if (el.customerAddress) el.customerAddress.value = state.customer.address || '';
   if (el.customerBetweenStreets) el.customerBetweenStreets.value = state.customer.betweenStreets || '';
   if (el.customerReferences) el.customerReferences.value = state.customer.references || '';
+  if (el.pickupTime) el.pickupTime.value = state.customer.pickupTime || '';
   if (el.customerNotes) el.customerNotes.value = state.customer.notes || '';
 
   if (state.customer.location?.mapsUrl && el.geoStatus) {
@@ -1327,6 +1431,12 @@ function syncCustomerForm() {
 function syncOrderMetaControls() {
   el.orderTypeInputs.forEach((input) => {
     input.checked = input.value === state.orderMeta.orderType;
+  });
+}
+
+function syncOrderTypeFields() {
+  el.orderTypeSections.forEach((section) => {
+    section.hidden = section.dataset.orderSection !== state.orderMeta.orderType;
   });
 }
 
@@ -1412,6 +1522,12 @@ function trapFocus(event, container) {
   if (!event.shiftKey && document.activeElement === last) {
     event.preventDefault();
     first.focus();
+  }
+}
+
+function restoreFocus(target) {
+  if (target instanceof HTMLElement && target.isConnected && !target.disabled) {
+    target.focus();
   }
 }
 
