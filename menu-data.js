@@ -551,3 +551,6 @@ window.MENU_DATA = {
     { id: 'post-cheesecake-oreo', categoryId: 'postres', name: 'Cheesecake de Oreo', basePrice: 30, availability: { mode: 'always' } },
   ],
 };
+
+export { MENU_DATA };
+export default MENU_DATA;

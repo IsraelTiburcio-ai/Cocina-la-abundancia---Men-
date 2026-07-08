@@ -64,9 +64,10 @@ jobs:
           critical = [
             "index.html",
             "Portada.png",
+            "Portada.webp",
             "styles.css",
-            "script.js",
             "menu-data.js",
+            "js/main.js",
           ]
 
           v2_dir = None
