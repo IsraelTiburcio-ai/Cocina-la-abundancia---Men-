@@ -460,6 +460,12 @@ main {
   background: #fcfefc;
 }
 
+a.menu-visual-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .menu-visual img {
   transition: transform 0.32s ease, filter 0.32s ease;
 }
